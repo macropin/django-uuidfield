@@ -22,6 +22,9 @@ class StringUUID(uuid.UUID):
 
         super(StringUUID, self).__init__(*args, **kwargs)
 
+    def __unicode__(self):
+        return unicode(str(self))
+
     def __str__(self):
         if self.hyphenate:
             return super(StringUUID, self).__str__()
@@ -29,35 +32,27 @@ class StringUUID(uuid.UUID):
         return self.hex
 
     def __len__(self):
-        return len(self.__str__())
+        return len(self.__unicode__())
 
 
 class UUIDField(Field):
     """
-    A field which stores a UUID value in hex format. This may also have the
-    Boolean attribute 'auto' which will set the value on initial save to a new
-    UUID value. Note that while all UUIDs are expected to be unique we enforce
-    this with a DB constraint.
+    A field which stores a UUID value in hex format. This may also have
+    the Boolean attribute 'auto' which will set the value on initial save to a
+    new UUID value (calculated using the UUID1 method). Note that while all
+    UUIDs are expected to be unique we enforce this with a DB constraint.
     """
     # TODO: support binary storage types
     __metaclass__ = SubfieldBase
 
     def __init__(self, version=4, node=None, clock_seq=None,
-                 namespace=None, name=None, auto=False, hyphenate=False,
-                 *args, **kwargs):
-        assert version in (1, 3, 4, 5), "UUID version {ver}is not supported."\
-            .format(ver=version)
+            namespace=None, name=None, auto=False, hyphenate=False, *args, **kwargs):
+        assert version in (1, 3, 4, 5), "UUID version %s is not supported." % version
         self.auto = auto
         self.version = version
         self.hyphenate = hyphenate
-
-        if hyphenate:
-            # We store UUIDs in string format, which is fixed at 36 characters.
-            kwargs['max_length'] = 36
-        else:
-            # We store UUIDs in hex format, which is fixed at 32 characters.
-            kwargs['max_length'] = 32
-
+        # We store UUIDs in hex format, which is fixed at 32 characters.
+        kwargs['max_length'] = 32
         if auto:
             # Do not let the user edit UUIDs if they are auto-assigned.
             kwargs['editable'] = False
@@ -126,7 +121,7 @@ class UUIDField(Field):
         if val is None:
             data = ''
         else:
-            data = str(val)
+            data = unicode(val)
         return data
 
     def to_python(self, value):
